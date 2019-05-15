@@ -20,14 +20,14 @@ Lip and hair color editor using face parsing maps.
 <tr>
 <td >Color</td>
 <td><img src="makeup/116_0.png" height="256" width="256" alt="Color"></td>
-<td><img src="makeup/116_3.png" height="256" width="256" alt="Color"></td>
+<td><img src="makeup/116_6.png" height="256" width="256" alt="Color"></td>
 </tr>
 
 <!-- Line 3: Color -->
 <tr>
 <td>Color</td>
 <td><img src="makeup/116_1.png" height="256" width="256" alt="Color"></td>
-<td><img src="makeup/116_6.png" height="256" width="256" alt="Color"></td>
+<td><img src="makeup/116_3.png" height="256" width="256" alt="Color"></td>
 </tr>
 
 <!-- Line 4: Color -->
@@ -38,3 +38,16 @@ Lip and hair color editor using face parsing maps.
 </tr>
 
 </table>
+
+### Using PyTorch 1.0 and python 3.x
+
+## Demo
+Change hair and lip color:
+```Shell
+python makeup.py --img-path imgs/116.jpg
+```
+### Try to use other colors:
+Change the color list in **makeup.py**(line 83)
+```
+colors = [[230, 50, 20], [20, 70, 180], [20, 70, 180]]
+```
