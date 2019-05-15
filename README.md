@@ -1,13 +1,6 @@
 # face-makeup.PyTorch
 Lip and hair color editor using face parsing maps.
 
-
-<p align="center">
-	<a href="https://github.com/zllrunning/face-makeup.PyTorch">
-    <img class="page-image" src="make/116_6.png" >
-	</a>
-</p>
-
 <table>
 
 <tr>
