@@ -8,19 +8,20 @@ from skimage.filters import gaussian
 
 # plt.switch_backend("qt5Agg")
 plt.switch_backend("tkAgg")
-# TODO: Fix the dictionry
+
 SEGMENTS = {
-    0: "background",
-    1: "skin",
-    2: "r_brow",
-    3: "l_brow",
-    4: "r_eye",
-    5: "l_eye",
-    10: "nose",
-    12: "u_lip",
-    13: "l_lip",
-    14: "neck",
-    18: "hat",
+    "background":0,
+    "skin":      1,
+    "r_brow":    2,
+    "l_brow":    3,
+    "r_eye":     4,
+    "l_eye":     5,
+     "nose":     10,
+     "u_lip":    12,
+     "l_lip":    13,
+     "neck":     14,
+     "hair":     17,
+     "hat":      18,
 }
 
 
@@ -95,31 +96,32 @@ def change_color(image, parsed_mask, **kwargs):
     # Permuting color spaces form RGB to BGR
     query = {SEGMENTS[key]: color for key, color in kwargs.items()}
     image_hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-    target_hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
     for key, color in query.items():
         b, g, r = color
         # Allocate mask
-        mask = np.zeros_like(image)
+        mask = np.zeros_like(image_hsv)
         mask[:, :, 0] = b
         mask[:, :, 1] = g
         mask[:, :, 2] = r
+        target_hsv = cv2.cvtColor(mask, cv2.COLOR_BGR2HSV)
 
         if key == 12 or key == 13:
             image_hsv[:, :, 0:2] = target_hsv[:, :, 0:2]
 
+        elif key == 17:
+            image_hsv = sharpen(image_hsv)
+
         else:
             image_hsv[:, :, 0:1] = target_hsv[:, :, 0:1]
 
-        new_image = sharpen(cv2.cvtColor(image_hsv, cv2.COLOR_HSV2BGR))
-
-        if key == 17:
-            new_image = sharpen(new_image)
-
-
+        new_image = cv2.cvtColor(image_hsv, cv2.COLOR_HSV2BGR)
         new_image[parsed_mask != key] = image[parsed_mask != key]
 
-        return new_image
+        image = new_image
+    plt.imshow(cv2.cvtColor(new_image, cv2.COLOR_BGR2RGB))
+    plt.show()
+    return cv2.cvtColor(new_image, cv2.COLOR_BGR2RGB)
 
 if __name__ == "__main__":
     # 1  face
@@ -178,7 +180,7 @@ if __name__ == "__main__":
     alpha_slider_max = 255
     title_window = "Linear Blend"
 
-    change_color(image, parsing, u_lip=(-1, 0, 255))
+    change_color(image, parsing, u_lip=(255, 0, 0), l_lip=(255, 0, 0))
     for i in range(2):
         image = cv2.imread(image_path)
 
