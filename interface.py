@@ -14,7 +14,10 @@ import matplotlib.pyplot as plt
 
 app = Flask(__name__)
 
-@app.route("/demo", methods=['GET'])
+# localhost:5000/demo?u_lip=0,0,255&l_lip=0,0,255&hair=0,0,255&skin=255,255,255
+
+
+@app.route("/demo", methods=["GET"])
 def apply_makeup():
     r = request
     np_array = np.frombuffer(r.data, np.uint8)
@@ -28,24 +31,27 @@ def apply_makeup():
     modified_img = change_color(img, parsing, **request.args)
 
     cv2.imwrite("img.jpg", cv2.cvtColor(modified_img, cv2.COLOR_BGR2RGB))
-    response = {'message': 'image received. size={}x{}'.format(img.shape[1], img.shape[0])
-                }
+    response = {
+        "message": "image received. size={}x{}".format(img.shape[1], img.shape[0])
+    }
 
     # encode response using jsonpickle
     response_pickled = jsonpickle.encode(response)
 
-    #pil_image = Image.fromarray(modified_img)
+    # pil_image = Image.fromarray(modified_img)
     # pil_image = io.StringIO(Image.fromarray(modified_img))
 
-
-    return send_file("img.jpg", mimetype="image/jpeg", attachment_filename="new.jpeg", as_attachment=False)
-
+    return send_file(
+        "img.jpg",
+        mimetype="image/jpeg",
+        attachment_filename="new.jpeg",
+        as_attachment=False,
+    )
 
 
 if __name__ == "__main__":
     app.debug = True
     app.run()
-
 
 
 #

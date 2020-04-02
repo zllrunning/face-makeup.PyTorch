@@ -10,18 +10,18 @@ from skimage.filters import gaussian
 plt.switch_backend("tkAgg")
 
 SEGMENTS = {
-    "background":0,
-    "skin":      1,
-    "r_brow":    2,
-    "l_brow":    3,
-    "r_eye":     4,
-    "l_eye":     5,
-     "nose":     10,
-     "u_lip":    12,
-     "l_lip":    13,
-     "neck":     14,
-     "hair":     17,
-     "hat":      18,
+    "background": 0,
+    "skin": 1,
+    "r_brow": 2,
+    "l_brow": 3,
+    "r_eye": 4,
+    "l_eye": 5,
+    "nose": 10,
+    "u_lip": 12,
+    "l_lip": 13,
+    "neck": 14,
+    "hair": 17,
+    "hat": 18,
 }
 
 
@@ -102,7 +102,7 @@ def change_color(image, parsed_mask, **kwargs):
         return image
     for key, color in query.items():
         if not isinstance(color, tuple):
-            color = tuple(color.split(','))
+            color = tuple(color.split(","))
         b, g, r = color
         # Allocate mask
         mask = np.zeros_like(image_hsv)
@@ -126,8 +126,8 @@ def change_color(image, parsed_mask, **kwargs):
         image = new_image
         changed_image = new_image.copy()
 
-
     return cv2.cvtColor(changed_image, cv2.COLOR_BGR2RGB)
+
 
 if __name__ == "__main__":
     # 1  face
