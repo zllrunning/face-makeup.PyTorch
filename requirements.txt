@@ -5,3 +5,4 @@ numpy
 opencv-python
 matplotlib
 scikit-image
+jsonpickle
