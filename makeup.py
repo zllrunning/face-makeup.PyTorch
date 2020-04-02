@@ -97,7 +97,12 @@ def change_color(image, parsed_mask, **kwargs):
     query = {SEGMENTS[key]: color for key, color in kwargs.items()}
     image_hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
+    changed_image = None
+    if not query:
+        return image
     for key, color in query.items():
+        if not isinstance(color, tuple):
+            color = tuple(color.split(','))
         b, g, r = color
         # Allocate mask
         mask = np.zeros_like(image_hsv)
@@ -119,9 +124,10 @@ def change_color(image, parsed_mask, **kwargs):
         new_image[parsed_mask != key] = image[parsed_mask != key]
 
         image = new_image
-    plt.imshow(cv2.cvtColor(new_image, cv2.COLOR_BGR2RGB))
-    plt.show()
-    return cv2.cvtColor(new_image, cv2.COLOR_BGR2RGB)
+        changed_image = new_image.copy()
+
+
+    return cv2.cvtColor(changed_image, cv2.COLOR_BGR2RGB)
 
 if __name__ == "__main__":
     # 1  face
