@@ -57,7 +57,7 @@ def hair(image, parsing, part=17, color=[230, 250, 250]):
     if part == 12 or part == 13:
         image_hsv[:, :, 0:2] = tar_hsv[:, :, 0:2]
     else:
-        image_hsv[:, :, 0:1] = tar_hsv[:, :, 0:1]
+        image_hsv[:, :, :] = tar_hsv[:, :, :]
 
     changed = cv2.cvtColor(image_hsv, cv2.COLOR_HSV2BGR)
 
@@ -169,14 +169,13 @@ if __name__ == "__main__":
         "lower_lip": 13,
     }
 
-    image_path = "/home/aziz/Projects/face/imgs/6.jpg"
+    image_path = "./imgs/6.jpg"
     cp = "cp/79999_iter.pth"
 
     image = cv2.imread(image_path)
     ori = image.copy()
     parsing = evaluate(image_path, cp)
     parsing = cv2.resize(parsing, image.shape[0:2], interpolation=cv2.INTER_NEAREST)
-
     parts = [
         table["hair"],
         table["lower_lip"],
@@ -186,8 +185,8 @@ if __name__ == "__main__":
     alpha_slider_max = 255
     title_window = "Linear Blend"
 
-    change_color(image, parsing, u_lip=(255, 0, 0), l_lip=(255, 0, 0))
-    for i in range(2):
+    #change_color(image, parsing, u_lip=(255, 0, 0), l_lip=(255, 0, 0))
+    for i in range(1):
         image = cv2.imread(image_path)
 
         lips = np.random.randint(1, 255, (3))
@@ -195,7 +194,7 @@ if __name__ == "__main__":
         colors = np.array([hair_, lips, lips])
 
         for part, color in zip(parts, colors):
-            image = hair(image, parsing, part, color)
+            image = hair(image, parsing, part, np.array([0,0,0]))
 
         # kernel = np.ones((5, 5), np.float32) / 25
         # dst = cv.filter2D(image, -1, kernel)
