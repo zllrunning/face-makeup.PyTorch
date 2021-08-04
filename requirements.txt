@@ -1,0 +1,8 @@
+torch
+torchvision
+flask
+numpy
+opencv-python
+matplotlib
+scikit-image
+jsonpickle

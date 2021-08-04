@@ -1,15 +1,28 @@
 import cv2
-import os
-import numpy as np
-from skimage.filters import gaussian
-from test import evaluate
 import argparse
+import numpy as np
+import matplotlib.pyplot as plt
 
+from test import evaluate
+from skimage.filters import gaussian
 
-def parse_args():
-    parse = argparse.ArgumentParser()
-    parse.add_argument('--img-path', default='imgs/116.jpg')
-    return parse.parse_args()
+# plt.switch_backend("qt5Agg")
+plt.switch_backend("tkAgg")
+
+SEGMENTS = {
+    "background": 0,
+    "skin": 1,
+    "r_brow": 2,
+    "l_brow": 3,
+    "r_eye": 4,
+    "l_eye": 5,
+    "nose": 10,
+    "u_lip": 12,
+    "l_lip": 13,
+    "neck": 14,
+    "hair": 17,
+    "hat": 18,
+}
 
 
 def sharpen(img):
@@ -31,8 +44,8 @@ def sharpen(img):
     return np.array(img_out, dtype=np.uint8)
 
 
-def hair(image, parsing, part=17, color=[230, 50, 20]):
-    b, g, r = color      #[10, 50, 250]       # [10, 250, 10]
+def hair(image, parsing, part=17, color=[230, 250, 250]):
+    b, g, r = color  # [10, 50, 250]       # [10, 250, 10]
     tar_color = np.zeros_like(image)
     tar_color[:, :, 0] = b
     tar_color[:, :, 1] = g
@@ -44,7 +57,7 @@ def hair(image, parsing, part=17, color=[230, 50, 20]):
     if part == 12 or part == 13:
         image_hsv[:, :, 0:2] = tar_hsv[:, :, 0:2]
     else:
-        image_hsv[:, :, 0:1] = tar_hsv[:, :, 0:1]
+        image_hsv[:, :, :] = tar_hsv[:, :, :]
 
     changed = cv2.cvtColor(image_hsv, cv2.COLOR_HSV2BGR)
 
@@ -52,56 +65,151 @@ def hair(image, parsing, part=17, color=[230, 50, 20]):
         changed = sharpen(changed)
 
     changed[parsing != part] = image[parsing != part]
+
     return changed
 
 
-if __name__ == '__main__':
+def change_color(image, parsed_mask, **kwargs):
+    """
+
+   :param image:
+   :param parsed_mask:
+   :param query:
+   :return:
+
+   Query (kwargs) example:
+
+   {
+       'background': (R, G, B)
+       'neck': (R, G, B)
+       'skin': (R, G, B)
+       'hat': (R, G, B)
+       'nose': (R, G, B)
+       'l_eye': (R, G, B)
+       'r_eye': (R, G, B)
+       'u_lip': (R, G, B)
+       'l_lip': (R, G, B)
+       'l_brow': (R, G, B)
+       'r_brow': (R, G, B)
+    }
+   """
+    # Permuting color spaces form RGB to BGR
+    query = {SEGMENTS[key]: color for key, color in kwargs.items()}
+    image_hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+
+    changed_image = None
+    if not query:
+        return image
+    for key, color in query.items():
+        if not isinstance(color, tuple):
+            color = tuple(color.split(","))
+        b, g, r = color
+        # Allocate mask
+        mask = np.zeros_like(image_hsv)
+        mask[:, :, 0] = b
+        mask[:, :, 1] = g
+        mask[:, :, 2] = r
+        target_hsv = cv2.cvtColor(mask, cv2.COLOR_BGR2HSV)
+
+        if key == 12 or key == 13:
+            image_hsv[:, :, 0:2] = target_hsv[:, :, 0:2]
+
+        elif key == 17:
+            image_hsv = sharpen(image_hsv)
+
+        else:
+            image_hsv[:, :, 0:1] = target_hsv[:, :, 0:1]
+
+        new_image = cv2.cvtColor(image_hsv, cv2.COLOR_HSV2BGR)
+        new_image[parsed_mask != key] = image[parsed_mask != key]
+
+        image = new_image
+        changed_image = new_image.copy()
+
+    return cv2.cvtColor(changed_image, cv2.COLOR_BGR2RGB)
+
+
+if __name__ == "__main__":
     # 1  face
     # 11 teeth
     # 12 upper lip
     # 13 lower lip
     # 17 hair
 
-    args = parse_args()
+    """
+     0: 'background'
+     14: 'neck'
+     1: 'skin'
+     18: 'hat'
+     10: 'nose'
+     5: 'l_eye'
+     4: 'r_eye'
+     12: 'u_lip'
+     13: 'l_lip'
+     3: 'l_brow'
+     2: 'r_brow'
+     
+     
+      8: 'l_ear'
+     9: 'r_ear'
+     10: 'mouth'
+     17: 'hair'
+     15: 'ear_r'
+     16: 'neck_l'
+     18: 'cloth'
+     3: 'eye_g'
+ """
+    parse = argparse.ArgumentParser()
+    parse.add_argument("--img-path", default="imgs/before.jpg")
+    args = parse.parse_args()
 
     table = {
-        'hair': 17,
-        'upper_lip': 12,
-        'lower_lip': 13
+        "hair": 17,
+        "upper_lip": 12,
+        "lower_lip": 13,
     }
 
-    image_path = args.img_path
-    cp = 'cp/79999_iter.pth'
+    image_path = "./imgs/6.jpg"
+    cp = "cp/79999_iter.pth"
 
     image = cv2.imread(image_path)
     ori = image.copy()
     parsing = evaluate(image_path, cp)
     parsing = cv2.resize(parsing, image.shape[0:2], interpolation=cv2.INTER_NEAREST)
+    parts = [
+        table["hair"],
+        table["lower_lip"],
+        table["upper_lip"],
+    ]
 
-    parts = [table['hair'], table['upper_lip'], table['lower_lip']]
+    alpha_slider_max = 255
+    title_window = "Linear Blend"
 
-    colors = [[230, 50, 20], [20, 70, 180], [20, 70, 180]]
+    #change_color(image, parsing, u_lip=(255, 0, 0), l_lip=(255, 0, 0))
+    for i in range(1):
+        image = cv2.imread(image_path)
 
-    for part, color in zip(parts, colors):
-        image = hair(image, parsing, part, color)
+        lips = np.random.randint(1, 255, (3))
+        hair_ = np.random.randint(1, 255, (3))
+        colors = np.array([hair_, lips, lips])
 
-    cv2.imshow('image', cv2.resize(ori, (512, 512)))
-    cv2.imshow('color', cv2.resize(image, (512, 512)))
+        for part, color in zip(parts, colors):
+            image = hair(image, parsing, part, np.array([0,0,0]))
 
-    cv2.waitKey(0)
+        # kernel = np.ones((5, 5), np.float32) / 25
+        # dst = cv.filter2D(image, -1, kernel)
+        dst = cv2.bilateralFilter(image, 30, 75, 75)
+
+        img = np.hstack((ori, dst))
+        plt.imshow(cv2.cvtColor(cv2.resize(img, (2048, 1024)), cv2.COLOR_BGR2RGB))
+        plt.show()
+        # cv2.imwrite("makeup.jpg", cv2.resize(img, (1536, 512)))
+
+        # cv2.imshow('color', cv2.resize(image, (512, 512)))
+        # cv2.imwrite('image_1.jpg', cv2.resize(ori, (512, 512)))
+        # cv2.imwrite('makeup.jpg', cv2.resize(img, (1536, 512)))
+
+    k = cv2.waitKey(0) & 0xFF
+    if k == 27:
+        print("killed")
     cv2.destroyAllWindows()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
